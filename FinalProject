@@ -1,0 +1,283 @@
+//Roberto Javier Texis Aburto
+//Grupo 523
+//Metodo de Gauss-Jordan y Gauss-Seidel
+
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+#define   MAX 10
+
+//Gauss-Jordan
+int llenado_datos(int orden);//Llena los datos ingresados y los almacena en una matriz
+void imprimir_matriz();//imprime la matriz original y la matriz identidad
+int MAT2();//Transfiere los datos de la primer matriz a una segunda matriz
+int Gauss(int orden);//Se encarga de controlar el metodo, es el que lleva el control del codigo
+int Metodo(int fila1, int columna,int fila2);//Funcion principal, se encarga de hacer las operaciones
+int Incognitas(int orden);//Imprime los resultados de las incognitas
+double division(int a,int b);//Calcula el resultado de las incognitas
+int matriz[MAX][MAX],matriz2[MAX][MAX];//Matrices a usar
+int orden;//cuanto x cuanto queremos la matriz (sin contar al vector solucion, ojo)
+
+//Gauss-Seidel
+void Impresionn(int i);
+int Operaciones(int Iteraciones);
+double X(double y, double z);//funcion del despeje de x (manual)
+double Y(double x, double z);//funcion del despeje de y (manual)
+double Z(double x, double y);//funcion del despeje de z (manual)
+double Er(double x1, double x2);//funcion que calcula el error relativo
+double x[300],y[300],z[300];//Vectores que almacenan los datos iterados
+double Erx[300],Ery[300],Erz[300];//Vectores que almacenan los errores relativos
+int Iteraciones;//Variable que sirve para guardar las iteraciones que queremos
+float tol;//tolerancia, hasta que margen de error toleraremos
+
+
+int opcion,opcion2;
+
+
+
+//Codigo Main
+main(){
+    
+    printf("\t----------Bienvenido!!----------- \n");
+    printf("\n\tQue metodo quiere elegir???");
+    inicio:
+    printf("\n\t[1]----------Metodo de Gauss-Jordan");
+    printf("\n\t[2]----------Metodo de Gauss-Seidel         ");
+    scanf("%i",&opcion);
+    
+    if(opcion==1)//Gauss-Jordan
+    {
+    printf("\n\t-------------------------Metodo de eliminacion Gauss-Jordan-------------------------\n\n");
+    printf("\tIntroduce el orden de la matriz (maximo 10): ");
+    scanf("\t%d",&orden);
+    llenado_datos(orden);//Llenamos los datos
+    printf("\n\tSu matriz es la siguiente: \n");
+    imprimir_matriz();//Imprimimos matriz
+    MAT2();//Transferimos datos a la matriz 2
+    Gauss(orden);//Control del codigo
+    printf("\n\tMatriz resuelta: \n");
+    imprimir_matriz();//Imprimimos la matriz resuelta
+    printf("\n");
+    printf("\tResultados de las incognitas:\n\n");
+    Incognitas(orden);//Imprime los resultados
+    printf("\n\nDesea volver al menu?? [1] para si, [2] para no ");
+    scanf("%i",&opcion);
+    if(opcion==1)
+    {
+    goto inicio;
+    }else{
+    return 0;
+    }
+    }
+    
+    
+    if(opcion==2)//Gauss-Seidel
+    {
+    //Valoramos cada error relativo en 100 para que pueda ingresar a la funcion "proceso"
+    Erx[0]=999;
+    Ery[0]=999;
+    Erz[0]=999;
+    int n=0;
+    printf("\n\tADVERTENCIA!!! los valores obtenidos provienen de una funcion establecida MANUALMENTE EN EL CODIGO\n\n\n");
+    printf("\t--------------------Metodo de Gauss-Seidel para una matriz cuadrada 3x3------------------- \n\n");
+    printf("\tValor inicial de X:  ");
+    scanf("%lf", &x[0]);
+    printf("\n\tValor inicial de Y:  ");
+    scanf("\t%lf",&y[0]);
+    printf("\n\tValor inicial de Z:  ");
+    scanf("\t%lf",&z[0]);
+    printf("\n\tIngrese el maximo de iteraciones toleradas:  ");
+    scanf("\t%i",&Iteraciones);
+    printf("\n\tIngrese error relativo:  ");
+    scanf("\t%f",&tol);
+    n=Operaciones(Iteraciones);
+    Impresionn(n);    
+    printf("\n\nDesea volver al menu?? [1] para si, [2] para no ");
+    scanf("%i",&opcion);
+    if(opcion==1)
+    {
+    goto inicio;
+    }else{
+    return 0;
+    }
+    }
+    
+    
+    if(opcion!=1 and opcion!=2)//Punto de salida 
+    {
+    printf("Opcion incorrecta, si desea salir del programa presione [0], si desea regresar al menu presione [1]  ");
+    scanf("%i",&opcion2);
+    if(opcion2==1){
+    goto inicio;
+    }else{
+    return 0;
+    }
+    }
+    
+}
+
+
+
+//llenamos la matriz 
+int llenado_datos(int orden){
+    int i,j;
+    printf("\n\t||Ha escogido matriz de orden %d||\n\n",orden);
+    printf("\t||llena la matriz Ax||\n");
+    for(i=0;i<orden;i++){
+    for(j=0;j<orden;j++){
+    printf("\tAx (%i,%i) ",i,j);
+    scanf("\t\n%i",&matriz[i][j]);
+    }
+    printf("\n");
+    }
+    printf("\t||llena la matriz Bx||\n ");
+    for(i=0;i<orden;i++){
+    for(j=orden;j<orden+1;j++){
+    printf("\tBx (%i) ",i);
+    scanf(" \t\n%i",&matriz[i][orden]);
+    }
+    printf("\n");
+    }
+}
+
+//Imprime matriz,tanto la original como la resuelta, sirve para ambas
+void imprimir_matriz(){
+    int i,j;
+    printf("\n");
+    for(i=0;i<orden;i++){
+    for(j=0;j<orden+1;j++){
+    if(j==orden){
+    printf("\t|%i",matriz[i][j]);
+    }else{
+    printf("\t%i",matriz[i][j]);
+
+    }
+    }
+    printf("\n");
+    }
+}
+//Aqui pasamos los datos de la primer matriz a la segunda matriz, esto con el fin de tener una 
+//Matriz exclusiva para hacer los calculos
+int MAT2(){
+    int i,j;
+    for(i=0;i<orden;i++){
+    for(j=0;j<orden;j++){
+    matriz2[i][j]=matriz[i][j];
+    }
+    }
+}
+//El codigo que controla la funcion de abajo
+int Gauss(int orden){
+int i,j;
+    for(i=0;i<orden;i++){
+    for(j=0;j<orden;j++){
+    if(i!=j){
+    Metodo(i,i,j);
+    }
+    }
+    }
+}
+//Metodo, esta funcion consiste en multiplicar el coeficiente de un factor por una fila de abajo o arriba
+//para transformarlo en cero, me base en este video de youtube https://www.youtube.com/watch?v=em0ZWErimyU&t=301s
+int Metodo(int fila1, int columna,int fila2){
+    int x,y,i,j;
+    x = matriz[fila1][columna];
+    y = matriz[fila2][columna];
+    for(i=0;i<1;i++){
+    for(columna=0;columna<orden+1;columna++){
+    matriz2[fila2][columna] = matriz[fila2][columna] *(-x);
+    matriz2[fila1][columna] = matriz[fila1][columna] * (y);
+    }
+    }
+    for(i=0;i<1;i++){
+    for(columna=0;columna<orden+1;columna++){
+    matriz[fila2][columna] = matriz2[fila2][columna]+matriz2[fila1][columna];
+    }
+    }
+}
+
+int Incognitas(int orden){//esta funcion imprime los reesultados de las incognitas
+    int i,j;
+    double x;
+    for(i=0;i<orden;i++){
+    for(j=0;j<orden+1;j++){
+    if(j == i){
+    x = division(matriz[i][orden],matriz[i][j]);
+    printf("\tx%i = (%i)/(%i) = %2.2lf",i,matriz[i][orden],matriz[i][j],x);
+    }
+    }
+    printf("\n");
+    }
+}
+double division(int x,int y){ //Esta funcion calcula el resultado de las incognitas
+    if(y!=0){
+    return (double)x/y;
+    }
+    else{
+    printf("\tNo se puede dividir un numero entre cero  ");
+    return 0;
+    }
+}
+
+
+
+//De aqui para abajo son funciones de Gauss-Seidel
+
+
+
+
+//Al igual que con Gauss-Seidel, esta matriz es la que lleva todas las operaciones
+int Operaciones(int Iteraciones){
+    int i=0;
+    
+    while((i<Iteraciones)and(Erx[i]>tol)and(Ery[i]>tol)and(Erz[i]>tol)){
+    x[i+1]=X(y[i],z[i]);
+    y[i+1]=Y(x[i+1],z[i]);
+    z[i+1]=Z(x[i+1],y[i+1]);
+    if(i!=0){
+    Erx[i+1]=Er(x[i],x[i+1]);
+    Ery[i+1]=Er(y[i],y[i+1]);
+    Erz[i+1]=Er(z[i],z[i+1]);
+    }else{
+    Erx[i+1]=Erx[i];
+    Ery[i+1]=Ery[i];
+    Erz[i+1]=Erz[i];
+    }
+    i++;
+    }
+    return i;
+
+}
+//estos despejes los hice gracias al video de youtube:
+//https://www.youtube.com/watch?v=od2BdjXfp54&t=341s
+double X(double y, double z){
+return (14+4*y+3*z)/8;
+}
+double Y(double x, double z){
+return (-1-2*x-3*z)/-5;
+}
+double Z(double x, double y){
+return (9+3*x-y)/9;
+}
+double Er(double x1, double x2){
+return 100*abs((x2-x1)/x2);
+}
+
+//Con esta funcion imprimimos los valores obtenidos, lo que hace es traer el total de iteraciones obtenidas
+//en la funcion operaciones y se convierte en un centinela de esta funcion
+void Impresionn(int n){//Void ya que no retornamos ningun valor
+    int j;
+    
+printf("\n\t ---------IMPRESION DE RESULTADOS---------\n\n");
+    for(j=0;j<=n;j++)
+    {
+    printf("\t|%f|",x[j]);
+    printf(" |%f| ",y[j]);
+    printf(" |%f| ",z[j]);
+    printf(" |%f| ",Erx[j]);
+    printf(" |%f| ",Ery[j]);
+    printf(" |%f| ",Erz[j]);
+    printf("\n");
+        
+    }
+}
